@@ -19,16 +19,15 @@ Tudo roda em Docker com a imagem `python:3.11-slim`. O processo sobe como usuár
 ```bash
 git clone https://github.com/alcantarafabio/isyshell-api.git
 cd isyshell-api
+```
+
+Antes de subir, edite o valor de `ISY_TOKEN` no `docker-compose.yml` com um token de sua escolha. Depois:
+
+```bash
 docker compose up --build
 ```
 
 A API fica em http://localhost:8000. O Swagger com todos os endpoints está em http://localhost:8000/docs.
-
-Pra pegar o token gerado no primeiro boot:
-
-```bash
-docker compose logs isyshell-api | grep "Token inicial"
-```
 
 ---
 
