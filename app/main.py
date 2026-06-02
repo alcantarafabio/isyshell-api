@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from app.database import init_db, seed_default_data
 from app.routes import scripts, execute, logs, admin
@@ -33,6 +35,9 @@ app.include_router(scripts.router)
 app.include_router(execute.router)
 app.include_router(logs.router)
 app.include_router(admin.router)
+
+_static_dir = Path(__file__).parent / "static"
+app.mount("/dashboard", StaticFiles(directory=_static_dir, html=True), name="dashboard")
 
 
 @app.get("/", tags=["Health"])
