@@ -10,9 +10,7 @@ if [ -z "$CLIENT_NAME" ]; then
 fi
 
 echo "[check_status] Verificando containers do cliente: $CLIENT_NAME"
-echo "──────────────────────────────────────────────"
 
-# Verifica containers com prefixo do cliente
 if command -v docker &>/dev/null; then
     CONTAINERS=$(docker ps -a --filter "name=${CLIENT_NAME}" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>/dev/null)
     if [ -z "$CONTAINERS" ]; then
@@ -24,6 +22,5 @@ else
     echo "[check_status] Docker não disponível neste ambiente."
 fi
 
-echo "──────────────────────────────────────────────"
 echo "[check_status] Verificação concluída."
 exit 0

@@ -27,7 +27,7 @@ app.add_middleware(
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
-) # Em produção deve-se restringir. Está aberto para facilitar testes e desenvolvimento durante o hackathon. 
+)  # open for hackathon — restrict in production
 
 app.include_router(scripts.router)
 app.include_router(execute.router)

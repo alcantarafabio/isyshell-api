@@ -16,7 +16,7 @@ TIMEOUT_SECONDS = int(os.getenv("SCRIPT_TIMEOUT", "120"))
 
 
 def _build_safe_path(filename: str) -> str:
-    # impede path traversal: garante que o arquivo está dentro de SCRIPTS_DIR
+    # prevents path traversal
     safe_path = os.path.realpath(os.path.join(SCRIPTS_DIR, filename))
     allowed_prefix = os.path.realpath(SCRIPTS_DIR)
     if not safe_path.startswith(allowed_prefix + os.sep) and safe_path != allowed_prefix:
@@ -86,7 +86,7 @@ def execute_script(
             capture_output=True,
             text=True,
             timeout=TIMEOUT_SECONDS,
-            # shell=False evita command injection
+            # shell=False prevents command injection
         )
     except subprocess.TimeoutExpired:
         log = _write_audit_log(db, script, payload.params or [], error_msg="Timeout excedido")

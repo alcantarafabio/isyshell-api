@@ -69,7 +69,6 @@ def seed_default_data():
     import uuid
     db = SessionLocal()
     try:
-        # Token padrão se não existir
         token_row = db.query(ConfigModel).filter_by(key="api_token").first()
         if not token_row:
             default_token = os.getenv("ISY_TOKEN", str(uuid.uuid4()))
@@ -77,7 +76,6 @@ def seed_default_data():
             db.commit()
             print(f"[IsyShell] Token inicial gerado: {default_token}")
 
-        # Scripts de exemplo
         scripts_dir = os.getenv("SCRIPTS_DIR", "/opt/isyone/scripts")
         examples = [
             {

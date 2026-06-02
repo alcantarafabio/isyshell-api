@@ -1,55 +1,30 @@
-# 🐚 IsyShell API
+# IsyShell API
 
-> **Orquestrador Automático de Infraestrutura — ISY.ONE**  
-> Hackathon FMU Tech 2026 · `github.com/alcantarafabio/isyshell-api`
+Projeto desenvolvido para o Hackathon FMU 2026.1 com ISY.ONE.
 
-Converta rotinas críticas de terminal em um **microsserviço seguro, auditável e conteinerizado**.
+A ideia surgiu de um problema real: a equipe de suporte da ISY.ONE precisa rodar scripts de terminal toda hora pra fazer manutenção nos clientes - limpeza de logs, verificação de status, reinicialização de serviços. Isso toma tempo, gera erro humano e não fica registrado em lugar nenhum.
 
----
+A IsyShell API resolve isso expondo esses scripts via HTTP. Em vez de alguém abrir SSH, digitar o comando e torcer pra não errar, qualquer ferramenta (Zapier, n8n, um painel interno) pode chamar a API e disparar o script automaticamente. Isso reduz bastante o tempo operacional da equipe - menos OPEX.
 
-## 🏗️ Arquitetura dos 5 Pilares
+## Como funciona
 
-| # | Pilar | Implementação |
-|---|-------|--------------|
-| 1 | **API RESTful + subprocess** | FastAPI + `subprocess.run()` sem `shell=True` |
-| 2 | **Segurança X-Isy-Token** | Middleware de validação contra banco SQLite |
-| 3 | **Cadastro de Scripts** | CRUD completo + rotação dinâmica de token |
-| 4 | **Logs de Auditoria** | SQLite com horário, script, params e status |
-| 5 | **Dockerfile** | `python:3.11-slim`, usuário não-root, volumes |
+A API foi feita com FastAPI e executa os scripts usando `subprocess.run()` sem `shell=True`. Essa escolha foi intencional: com `shell=True`, alguém poderia passar um parâmetro como `; rm -rf /` e o sistema executaria sem reclamar. Isso se chama Command Injection, e aqui está bloqueado. Também tem proteção contra Path Traversal - o caminho real do script é validado com `os.path.realpath()` pra garantir que nada fora da pasta permitida seja acessado.
 
----
+Para chamar qualquer endpoint, é preciso passar o header `X-Isy-Token`. O token fica salvo num banco SQLite e pode ser rotacionado sem reiniciar nada. Os scripts são cadastrados via CRUD - adiciona, atualiza, remove - e cada execução fica registrada com horário, parâmetros e resultado.
 
-## 🚀 Subindo com Docker Compose
+Tudo roda em Docker com a imagem `python:3.11-slim`. O processo sobe como usuário não-root e os scripts são montados como volume read-only, então o container não tem como modificar os arquivos da máquina host.
+
+## Como rodar
 
 ```bash
-# Clone o repositório
 git clone https://github.com/alcantarafabio/isyshell-api.git
 cd isyshell-api
-
-# (Opcional) Defina seu token inicial
-export ISY_TOKEN="meu-token-super-secreto-2026"
-
-# Build e start
-docker compose up -d --build
-
-# Acompanhe os logs
-docker compose logs -f
+docker compose up --build
 ```
 
-A API estará disponível em: **http://localhost:8000**  
-Swagger UI: **http://localhost:8000/docs**
+A API fica em http://localhost:8000. O Swagger com todos os endpoints está em http://localhost:8000/docs.
 
----
-
-## 🔐 Autenticação
-
-Todas as rotas (exceto `/`) exigem o header:
-
-```
-X-Isy-Token: <seu-token>
-```
-
-O token inicial é gerado automaticamente no primeiro boot e exibido nos logs do container:
+Pra pegar o token gerado no primeiro boot:
 
 ```bash
 docker compose logs isyshell-api | grep "Token inicial"
@@ -57,115 +32,4 @@ docker compose logs isyshell-api | grep "Token inicial"
 
 ---
 
-## 📋 Endpoints Principais
-
-### Scripts
-
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| `GET` | `/api/v1/scripts/` | Lista scripts cadastrados |
-| `POST` | `/api/v1/scripts/` | Cadastra novo script |
-| `PATCH` | `/api/v1/scripts/{id}` | Atualiza descrição/status |
-| `DELETE` | `/api/v1/scripts/{id}` | Remove script |
-
-### Execução
-
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| `POST` | `/api/v1/execute/{script_name}` | Executa script com parâmetros |
-
-**Exemplo de payload:**
-```json
-{
-  "params": ["meu_cliente", "8155"]
-}
-```
-
-### Auditoria
-
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| `GET` | `/api/v1/logs/` | Lista logs com filtros e paginação |
-| `GET` | `/api/v1/logs/summary` | Resumo estatístico por script |
-
-### Administração
-
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| `GET` | `/api/v1/admin/token/info` | Metadados do token atual |
-| `PUT` | `/api/v1/admin/token` | Atualiza token manualmente |
-| `POST` | `/api/v1/admin/token/generate` | Gera novo token UUID automático |
-
----
-
-## 🛡️ Segurança
-
-- `subprocess.run()` **sem** `shell=True` — elimina injeção via metacaracteres
-- Validação de parâmetros: bloqueia `;`, `|`, `&`, `` ` ``, `$`, `<`, `>` e outros
-- Proteção contra **path traversal** com `os.path.realpath()`
-- Container rodando com **usuário não-root** (`uid=1001`)
-- Scripts montados como volume **read-only** (`:ro`)
-- Token armazenado em banco — **rotação sem restart**
-
----
-
-## 📁 Estrutura do Projeto
-
-```
-isyshell-api/
-├── app/
-│   ├── main.py          # FastAPI entry point
-│   ├── database.py      # SQLAlchemy + modelos SQLite
-│   ├── schemas.py       # Pydantic schemas + validações
-│   ├── auth.py          # Validação X-Isy-Token
-│   └── routes/
-│       ├── scripts.py   # CRUD de scripts
-│       ├── execute.py   # Execução subprocess
-│       ├── logs.py      # Auditoria
-│       └── admin.py     # Rotação de token
-├── scripts/             # Shell scripts (montado via volume)
-│   ├── cleanup_logs.sh
-│   └── check_status.sh
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
-└── README.md
-```
-
----
-
-## 🧪 Teste Rápido com curl
-
-```bash
-# Descubra o token inicial
-TOKEN=$(docker compose exec isyshell-api \
-  python -c "from app.database import SessionLocal, ConfigModel; \
-  db=SessionLocal(); print(db.query(ConfigModel).filter_by(key='api_token').first().value)")
-
-# Liste os scripts cadastrados
-curl -H "X-Isy-Token: $TOKEN" http://localhost:8000/api/v1/scripts/
-
-# Execute o cleanup_logs
-curl -X POST \
-  -H "X-Isy-Token: $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"params": []}' \
-  http://localhost:8000/api/v1/execute/cleanup_logs
-
-# Veja os logs de auditoria
-curl -H "X-Isy-Token: $TOKEN" http://localhost:8000/api/v1/logs/
-```
-
----
-
-## 🔮 Diferenciais e Próximos Passos
-
-- [ ] Webhook de alerta (Discord/Telegram) em falhas críticas
-- [ ] Fila assíncrona com Celery + Redis para scripts demorados
-- [ ] Interface web React para gestão dos scripts
-- [ ] Autenticação JWT com escopos por script
-- [ ] Rate limiting por token
-
----
-
-© 2026 ISY.ONE — Hackathon FMU Tech
+Fábio da Rocha e Silva Alcântara - estudante de ADS, 4o semestre, FMU
