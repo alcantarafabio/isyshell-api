@@ -1,0 +1,38 @@
+version: "3.9"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# IsyShell API — Docker Compose
+# Uso: docker compose up -d --build
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+  isyshell-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: isyshell-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Token inicial — troque antes de subir em produção!
+      ISY_TOKEN: ${ISY_TOKEN:-meu-token-seguro-trocar-em-producao}
+      SCRIPTS_DIR: /opt/isyone/scripts
+      DB_PATH: /data/isyshell.db
+      SCRIPT_TIMEOUT: 120
+    volumes:
+      # Scripts do host → container (read-only para maior segurança)
+      - ./scripts:/opt/isyone/scripts:ro
+      # Banco de dados persistente
+      - isyshell_data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  isyshell_data:
+    driver: local
