@@ -92,7 +92,7 @@ def seed_default_data():
             },
             {
                 "name": "provisionar",
-                "filename": "provisionar.sh",
+                "filename": "provisionar_cliente.sh",
                 "description": "Provisiona novo ambiente para cliente",
                 "parameters": "client_name (string), domain (string), port (int)",
             },
