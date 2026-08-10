@@ -4,7 +4,7 @@ Projeto desenvolvido para o Hackathon FMU 2026.1 com ISY.ONE.
 
 A ideia surgiu de um problema real: a equipe de suporte da ISY.ONE precisa rodar scripts de terminal toda hora pra fazer manutenção nos clientes - limpeza de logs, verificação de status, reinicialização de serviços. Isso toma tempo, gera erro humano e não fica registrado em lugar nenhum.
 
-A IsyShell API resolve isso expondo esses scripts via HTTP. Em vez de alguém abrir SSH, digitar o comando e torcer pra não errar, qualquer ferramenta (Zapier, n8n, um painel interno) pode chamar a API e disparar o script automaticamente. Isso reduz bastante o tempo operacional da equipe - menos OPEX.
+A IsyShell API resolve isso expondo esses scripts via HTTP. Em vez de alguém abrir SSH, digitar o comando e torcer pra não errar, qualquer ferramenta (Zapier, n8n, um painel interno) pode chamar a API e disparar o script automaticamente. 
 
 ## Como funciona
 
@@ -29,6 +29,3 @@ docker compose up --build
 
 A API fica em http://localhost:8000. O Swagger com todos os endpoints está em http://localhost:8000/docs.
 
----
-
-Fábio da Rocha e Silva Alcântara - estudante de ADS, 4o semestre, FMU
